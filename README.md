@@ -27,9 +27,15 @@
 4. Add `clang` directory to the `%PATH%.
 
    ```
-   set PATH=%PATH%;C:\Git\vcpkg\packages\llvm_x64-windows\tools\llvm
+   set PATH=%PATH%;%VCPKG_ROOT%\packages\llvm_x64-windows\tools\llvm
    ```
 
-5. Restart the IDE (Visual Studio Code or other) to reload environment variables.
+5. Set the following environment variable.
 
-6. Build with `cargo build`.
+   ```
+   set VCPKGRS_DYNAMIC=1
+   ```
+
+6. Restart the IDE or command prompt where you build the project to reload environment variables.
+
+7. Build with `cargo build -vv`.
