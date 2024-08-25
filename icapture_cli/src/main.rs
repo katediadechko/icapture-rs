@@ -1,3 +1,8 @@
-fn main() {
-    icapture_core::ICaptureCore::find_device_by_name("USB Capture HDMI 4K+");
+use icapture_core::ICapture;
+use std::error::Error;
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let icapture = ICapture::new("USB Capture HDMI 4K+")?;
+
+    Ok(())
 }

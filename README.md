@@ -1,8 +1,8 @@
 # icapture-rs
 
-## Build
+Client-server application for capturing images and video on Windows.
 
-### Windows
+## Build
 
 1. [Install](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started?pivots=shell-cmd#1---set-up-vcpkg) `vcpkg` package manager.
 
