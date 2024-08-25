@@ -1,0 +1,11 @@
+[package]
+name = "icapture_core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+opencv = { version = "0.92.2", features = ["clang-runtime"] }
+
+[lib]
+name = "icapture_core"
+path = "src/lib.rs"

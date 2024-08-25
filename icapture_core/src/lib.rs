@@ -1,6 +1,6 @@
 use opencv::{highgui, prelude::*, videoio, Result};
 
-fn main() -> Result<()> {
+pub fn foo() -> Result<()> {
     let window = "video capture";
     highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
     let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?; // 0 is the default camera
