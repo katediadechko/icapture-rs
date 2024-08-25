@@ -3,7 +3,7 @@ use opencv::{videoio, videoio::VideoCapture, Result};
 pub mod device;
 
 pub struct ICapture {
-    pub instance: VideoCapture,
+    instance: VideoCapture,
 }
 
 impl ICapture {
