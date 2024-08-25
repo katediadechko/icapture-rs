@@ -1,5 +1,3 @@
-use icapture_core::foo;
-
 fn main() {
-    let _ = foo();
+    icapture_core::ICaptureCore::find_device_by_name("USB Capture HDMI 4K+");
 }
