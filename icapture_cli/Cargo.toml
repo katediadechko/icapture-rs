@@ -2,6 +2,10 @@
 name = "icapture_cli"
 version = "0.1.0"
 edition = "2021"
+authors = ["Kate Nyzhnyk <kate.nyzhnyk@gmail.com>"]
+description = "Command line interface for capturing images and video on Windows"
+repository = "https://github.com/katediadechko/icapture-rs"
+license = "MIT"
 
 [dependencies]
 icapture_core = { path = "../icapture_core" }
