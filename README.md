@@ -39,3 +39,15 @@ Client-server application for capturing images and video on Windows.
 6. Restart the IDE or command prompt where you build the project to reload environment variables.
 
 7. Build with `cargo build -vv`.
+
+## Run
+
+1. icapture-rs uses [env_logger](https://docs.rs/env_logger/latest/env_logger/index.html) for logging and tracing. Set the `RUST_LOG` environment variable to manage the logging level and scope. For instance,
+
+   ```
+   set RUST_LOG=trace
+   ```
+
+2. Make sure the configuration file `config.json` is located in the current directory. Update the configuration if necessary.
+
+3. Run with `cargo run` or `icapture_cli.exe`.

@@ -8,4 +8,5 @@ repository = "https://github.com/katediadechko/icapture-rs"
 license = "MIT"
 
 [dependencies]
+env_logger = "0.11.5"
 icapture_core = { path = "../icapture_core" }

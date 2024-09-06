@@ -1,3 +1,4 @@
+use log::warn;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io;
@@ -6,7 +7,9 @@ use std::io::BufReader;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
     pub device_name: String,
-    pub fps: u8,
+    pub fps: u32,
+    pub frame_width: u32,
+    pub frame_height: u32,
 }
 
 #[derive(Debug)]
@@ -32,6 +35,8 @@ impl Default for Config {
         Config {
             device_name: String::from("USB Capture HDMI 4K+"),
             fps: 30,
+            frame_width: 1920,
+            frame_height: 1080,
         }
     }
 }
@@ -41,8 +46,8 @@ impl Config {
         match Self::try_from_file(file_path) {
             Ok(config) => config,
             Err(_) => {
-                eprintln!("Cannot read config file '{file_path}'");
-                eprintln!("Falling back to default configuration {:?}", Self::default());
+                warn!("cannot read config file '{file_path}'");
+                warn!("falling back to default configuration {:?}", Self::default());
                 Self::default()
             }
         }

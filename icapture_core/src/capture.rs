@@ -1,11 +1,19 @@
-use opencv::{
-    highgui,
-    prelude::*,
-    videoio::{self, VideoCapture, VideoCaptureTraitConst},
-    Result,
-};
+use crate::config::Config;
+use log::{debug, warn};
+use opencv::{highgui, prelude::*, videoio::*, Error, Result};
+use thiserror::Error;
 
 pub mod device;
+
+#[derive(Error, Debug)]
+pub enum CaptureError {
+    #[error("cannot find capture device '{0}'")]
+    DeviceNotFound(String),
+    #[error("cannot open capture device '{0}'")]
+    DeviceOpenError(String),
+    #[error("opencv error: {0}")]
+    OpenCvError(#[from] Error),
+}
 
 pub struct Capture {
     device_name: String,
@@ -13,33 +21,30 @@ pub struct Capture {
 }
 
 impl Capture {
-    pub fn new(name: &str) -> Result<Self, String> {
-        let device_name: String = name.to_string();
-        let device_id = match Self::find_device_by_name(name) {
-            Some(id) => id as i32,
-            None => return Err(format!("Cannot find capture device '{name}'")),
-        };
+    pub fn new(conf: &Config) -> Result<Self, CaptureError> {
+        let device_name: String = conf.device_name.clone();
+        let device_id = Self::capture_find_device_by_name(&device_name)
+            .ok_or_else(|| CaptureError::DeviceNotFound(device_name.clone()))?;
 
-        let instance = match Self::init_device(device_id) {
-            Ok(instance) => instance,
-            Err(error) => return Err(error.message),
-        };
+        let mut instance = Self::capture_new_device(device_id)?;
 
-        match instance.is_opened() {
-            Ok(is_opened) => {
-                if !is_opened {
-                    return Err(format!("Cannot open capture device '{name}'"));
-                }
-            }
-            Err(error) => {
-                return Err(error.message);
-            }
-        };
+        if !instance.is_opened()? {
+            return Err(CaptureError::DeviceOpenError(device_name.clone()));
+        }
 
-        Ok(Self { device_name, instance })
+        Self::capture_set_fps(&mut instance, conf.fps)?;
+        Self::capture_verify_fps(&instance, conf.fps)?;
+        Self::capture_set_frame_size(&mut instance, (conf.frame_width, conf.frame_height))?;
+        Self::capture_verify_frame_size(&instance, (conf.frame_width, conf.frame_height))?;
+
+        Ok(Self {
+            device_name,
+            instance,
+        })
     }
 
-    pub fn dispose(_instance: &VideoCapture) {
+    pub fn dispose(&mut self) -> Result<()> {
+        self.instance.release()
     }
 
     pub fn preview(&mut self) -> Result<()> {
@@ -59,12 +64,87 @@ impl Capture {
         Ok(())
     }
 
-    fn find_device_by_name(name: &str) -> Option<usize> {
+    pub fn get_fps(&self) -> Result<u32> {
+        Self::capture_get_fps(&self.instance)
+    }
+
+    pub fn get_frame_size(&self) -> Result<(u32, u32)> {
+        Self::capture_get_frame_size(&self.instance)
+    }
+
+    pub fn set_fps(&mut self, fps: u32) -> Result<bool> {
+        Self::capture_set_fps(&mut self.instance, fps)?;
+        Self::capture_verify_fps(&self.instance, fps)
+    }
+
+    pub fn set_frame_size(&mut self, size: (u32, u32)) -> Result<bool> {
+        Self::capture_set_frame_size(&mut self.instance, size)?;
+        Self::capture_verify_frame_size(&self.instance, size)
+    }
+
+    fn capture_find_device_by_name(name: &str) -> Option<u32> {
         let devices = device::enumerate_capture_devices().ok()?;
         device::get_capture_device_id_by_name(&devices, name)
     }
 
-    fn init_device(device_id: i32) -> Result<VideoCapture, opencv::Error> {
-        VideoCapture::new(device_id, videoio::CAP_DSHOW)
+    fn capture_new_device(device_id: u32) -> Result<VideoCapture, opencv::Error> {
+        VideoCapture::new(device_id as i32, CAP_MSMF)
+    }
+
+    fn capture_get_fps(capture: &VideoCapture) -> Result<u32, opencv::Error> {
+        let fps = capture.get(CAP_PROP_FPS).map(|fps| fps as u32)?;
+        debug!("get fps: {fps}");
+        Ok(fps)
+    }
+
+    fn capture_get_frame_size(capture: &VideoCapture) -> Result<(u32, u32), opencv::Error> {
+        let width = capture.get(CAP_PROP_FRAME_WIDTH).map(|w| w as u32)?;
+        let height = capture.get(CAP_PROP_FRAME_HEIGHT).map(|h| h as u32)?;
+        debug!("get frame size: {width}x{height}");
+        Ok((width, height))
+    }
+
+    fn capture_set_fps(capture: &mut VideoCapture, fps: u32) -> Result<bool, opencv::Error> {
+        let fps_set = capture.set(CAP_PROP_FPS, fps as f64)?;
+        debug!("set fps: {fps}");
+        Ok(fps_set)
+    }
+
+    fn capture_set_frame_size(
+        capture: &mut VideoCapture,
+        size: (u32, u32),
+    ) -> Result<bool, opencv::Error> {
+        let width_set = capture.set(CAP_PROP_FRAME_WIDTH, size.0 as f64)?;
+        let height_set = capture.set(CAP_PROP_FRAME_HEIGHT, size.1 as f64)?;
+        debug!("set frame size: {}x{}", size.0, size.1);
+        Ok(width_set && height_set)
+    }
+
+    fn capture_verify_fps(capture: &VideoCapture, expected_fps: u32) -> Result<bool, Error> {
+        let actual_fps = Self::capture_get_fps(capture)?;
+        let success = actual_fps == expected_fps;
+        if !success {
+            warn!(
+                "fps mismatch: expected {}, actual {}",
+                expected_fps, actual_fps
+            )
+        }
+        Ok(success)
+    }
+
+    fn capture_verify_frame_size(
+        capture: &VideoCapture,
+        expected_size: (u32, u32),
+    ) -> Result<bool, Error> {
+        let actual_size = Self::capture_get_frame_size(capture)?;
+        let success = actual_size == expected_size;
+
+        if !success {
+            warn!(
+                "frame size mismatch: expected {:?}, actual {:?}",
+                expected_size, actual_size
+            )
+        }
+        Ok(success)
     }
 }

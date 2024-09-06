@@ -1,3 +1,4 @@
+use log::debug;
 use windows::{
     core::*,
     Win32::Foundation::E_FAIL,
@@ -28,11 +29,13 @@ pub fn enumerate_capture_devices() -> Result<Vec<String>> {
         dev_names.push(get_capture_device_name(device)?);
     }
 
+    debug!("available capture devices: {:#?}", dev_names);
+
     Ok(dev_names)
 }
 
-pub fn get_capture_device_id_by_name(names: &[String], target: &str) -> Option<usize> {
-    names.iter().position(|name| name == target)
+pub fn get_capture_device_id_by_name(names: &[String], target: &str) -> Option<u32> {
+    names.iter().position(|name| name == target).and_then(|pos| pos.try_into().ok())
 }
 
 fn get_capture_device_name(device: &Option<IMFActivate>) -> Result<String> {
@@ -56,5 +59,5 @@ fn get_capture_device_name(device: &Option<IMFActivate>) -> Result<String> {
 
         return Ok(res_name);
     }
-    Err(Error::new(E_FAIL, "Cannot get capture device name"))
+    Err(Error::new(E_FAIL, "cannot get capture device name"))
 }
