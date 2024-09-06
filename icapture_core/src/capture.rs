@@ -1,13 +1,15 @@
 use crate::config::Config;
-use chrono::Local;
 use log::{debug, warn};
 use opencv::{core, highgui, imgcodecs, prelude::*, videoio::*, Error, Result};
 use thiserror::Error;
 
 pub mod device;
+pub mod file;
 
 #[derive(Error, Debug)]
 pub enum CaptureError {
+    #[error("cannot create file or directory '{0}'")]
+    CreateFileDirectory(String),
     #[error("cannot find capture device '{0}'")]
     DeviceNotFound(String),
     #[error("cannot open capture device '{0}'")]
@@ -21,11 +23,17 @@ pub enum CaptureError {
 pub struct Capture {
     device_name: String,
     instance: VideoCapture,
+    data_dir: String,
 }
 
 impl Capture {
     pub fn new(conf: &Config) -> Result<Self, CaptureError> {
-        let device_name: String = conf.device_name.clone();
+        let device_name = conf.device_name.clone();
+        let data_dir = conf.data_dir.clone();
+        if file::create_dir(&data_dir).is_err() {
+            return Err(CaptureError::CreateFileDirectory(data_dir.clone()));
+        }
+
         let device_id = Self::capture_find_device_by_name(&device_name)
             .ok_or_else(|| CaptureError::DeviceNotFound(device_name.clone()))?;
 
@@ -43,6 +51,7 @@ impl Capture {
         Ok(Self {
             device_name,
             instance,
+            data_dir
         })
     }
 
@@ -81,9 +90,8 @@ impl Capture {
     }
 
     pub fn grab_frame(&mut self) -> Result<bool, CaptureError> {
-        let timestamp = Local::now().format("%Y-%m-%d_%H-%M-%S.%3f").to_string();
-        let filename = format!("{}.png", timestamp);
-        self.grab_frame_to_file(&filename)
+        let file_path = format!("{}\\{}", self.data_dir, file::get_name("png"));
+        self.grab_frame_to_file(&file_path)
     }
 
     pub fn get_fps(&self) -> Result<u32> {

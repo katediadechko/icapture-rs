@@ -2,5 +2,6 @@
     "device_name": "USB Capture HDMI 4K+",
     "fps": 30,
     "frame_width": 1920,
-    "frame_height": 1080
+    "frame_height": 1080,
+    "data_dir": "c:\\icapture_data"
 }

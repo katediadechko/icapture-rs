@@ -10,6 +10,7 @@ pub struct Config {
     pub fps: u32,
     pub frame_width: u32,
     pub frame_height: u32,
+    pub data_dir: String,
 }
 
 #[derive(Debug)]
@@ -37,6 +38,7 @@ impl Default for Config {
             fps: 30,
             frame_width: 1920,
             frame_height: 1080,
+            data_dir: String::from("c:\\icapture_data"),
         }
     }
 }
@@ -72,10 +74,11 @@ mod tests {
     #[test]
     fn test_from_valid_file_succeeds() {
         let config = Config {
-            device_name: "Test device".to_string(),
+            device_name: "testdevice".to_string(),
             fps: 42,
             frame_width: 2560,
             frame_height: 1440,
+            data_dir: "testdir".to_string(),
         };
         let json = serde_json::to_string(&config).unwrap();
         let file_path = "test_config.json";
