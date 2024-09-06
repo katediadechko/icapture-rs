@@ -24,7 +24,7 @@ Client-server application for capturing images and video on Windows.
    vcpkg install llvm opencv4[contrib,nonfree]
    ```
 
-4. Add `clang` directory to the `%PATH%.
+4. Add `clang` directory to the `%PATH%`.
 
    ```
    set PATH=%PATH%;%VCPKG_ROOT%\packages\llvm_x64-windows\tools\llvm
