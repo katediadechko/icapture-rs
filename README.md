@@ -48,6 +48,12 @@ Client-server application for capturing images and video on Windows.
    set RUST_LOG=trace
    ```
 
-2. Make sure the configuration file `config.json` is located in the current directory. Update the configuration if necessary.
+2. Make sure the configuration file `config.json` is located in the current directory. Update the configuration if necessary. If the file is not present or invalid, default capturing parameters will be used.
 
 3. Run with `cargo run` or `icapture_cli.exe`.
+
+## Test
+
+1. Few existing unit tests can be run with `cargo test`.
+
+2. The solution has been developed and tested on Windows 10, version 22H2 with [Magewell USB Capture HDMI 4K Plus](https://www.magewell.com/products/usb-capture-hdmi-4k-plus) card.

@@ -7,8 +7,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config = Config::from_file("config.json");
 
     let mut capture = Capture::new(&config)?;
-    capture.set_fps(0)?;
-    capture.set_frame_size((0, 0))?;
     capture.preview()?;
     capture.dispose()?;
 
