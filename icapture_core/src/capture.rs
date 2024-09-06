@@ -1,10 +1,7 @@
-use crate::config::Config;
+use crate::{config::Config, device, file};
 use log::{debug, warn};
 use opencv::{core, highgui, imgcodecs, prelude::*, videoio::*, Error, Result};
 use thiserror::Error;
-
-pub mod device;
-pub mod file;
 
 #[derive(Error, Debug)]
 pub enum CaptureError {
