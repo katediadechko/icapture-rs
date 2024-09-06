@@ -74,11 +74,11 @@ mod tests {
     #[test]
     fn test_from_valid_file_succeeds() {
         let config = Config {
-            device_name: "testdevice".to_string(),
+            device_name: "Test device".to_string(),
             fps: 42,
             frame_width: 2560,
             frame_height: 1440,
-            data_dir: "testdir".to_string(),
+            data_dir: "Test directory".to_string(),
         };
         let json = serde_json::to_string(&config).unwrap();
         let file_path = "test_config.json";
