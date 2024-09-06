@@ -1,6 +1,7 @@
 use crate::config::Config;
+use chrono::Local;
 use log::{debug, warn};
-use opencv::{highgui, prelude::*, videoio::*, Error, Result};
+use opencv::{core, highgui, imgcodecs, prelude::*, videoio::*, Error, Result};
 use thiserror::Error;
 
 pub mod device;
@@ -11,6 +12,8 @@ pub enum CaptureError {
     DeviceNotFound(String),
     #[error("cannot open capture device '{0}'")]
     DeviceOpenError(String),
+    #[error("captured an empty frame")]
+    EmptyFrame,
     #[error("opencv error: {0}")]
     OpenCvError(#[from] Error),
 }
@@ -62,6 +65,25 @@ impl Capture {
             }
         }
         Ok(())
+    }
+
+    pub fn grab_frame_to_file(&mut self, file_path: &str) -> Result<bool, CaptureError> {
+        let mut frame = Mat::default();
+        let success = self.instance.read(&mut frame)?;
+        if frame.empty() {
+            return Err(CaptureError::EmptyFrame);
+        }
+        let mut params = core::Vector::default();
+        params.push(imgcodecs::IMWRITE_PNG_COMPRESSION);
+        params.push(0);
+        imgcodecs::imwrite(file_path, &frame, &params)?;
+        Ok(success)
+    }
+
+    pub fn grab_frame(&mut self) -> Result<bool, CaptureError> {
+        let timestamp = Local::now().format("%Y-%m-%d_%H-%M-%S.%3f").to_string();
+        let filename = format!("{}.png", timestamp);
+        self.grab_frame_to_file(&filename)
     }
 
     pub fn get_fps(&self) -> Result<u32> {

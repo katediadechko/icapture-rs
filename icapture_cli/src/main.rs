@@ -8,6 +8,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut capture = Capture::new(&config)?;
     capture.preview()?;
+    capture.grab_frame()?;
     capture.dispose()?;
 
     Ok(())
