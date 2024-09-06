@@ -2,6 +2,9 @@
 name = "icapture_core"
 version = "0.1.0"
 edition = "2021"
+description = "Library for capturing images and video on Windows"
+repository = "https://github.com/katediadechko/icapture-rs"
+license = "MIT"
 
 [dependencies]
 log = "0.4.22"
