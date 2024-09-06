@@ -1,38 +1,56 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
+use std::fs::File;
+use std::io;
+use std::io::BufReader;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct DeviceConfig {
+pub struct Config {
     pub device_name: String,
     pub fps: u8,
 }
 
-impl DeviceConfig {
-    pub fn to_json(&self) -> Result<String> {
-        serde_json::to_string(self)
-    }
+#[derive(Debug)]
+pub enum ConfigError {
+    Io(io::Error),
+    Json(serde_json::Error),
+}
 
-    pub fn from_json(json_str: &str) -> Result<Self> {
-        serde_json::from_str(json_str)
+impl From<io::Error> for ConfigError {
+    fn from(err: io::Error) -> ConfigError {
+        ConfigError::Io(err)
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl From<serde_json::Error> for ConfigError {
+    fn from(err: serde_json::Error) -> ConfigError {
+        ConfigError::Json(err)
+    }
+}
 
-    #[test]
-    fn test_serialization_succeeds() {
-        let config = DeviceConfig {
-            device_name: "Camera A".to_string(),
-            fps: 60,
-        };
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            device_name: String::from("USB Capture HDMI 4K+"),
+            fps: 30,
+        }
+    }
+}
 
-        let json = config.to_json().unwrap();
-        assert_eq!(json, r#"{"device_name":"Camera A","fps":60}"#);
+impl Config {
+    pub fn from_file(file_path: &str) -> Self {
+        match Self::try_from_file(file_path) {
+            Ok(config) => config,
+            Err(_) => {
+                eprintln!("Cannot read config file '{file_path}'");
+                eprintln!("Falling back to default configuration {:?}", Self::default());
+                Self::default()
+            }
+        }
+    }
 
-        let deserialized: DeviceConfig = DeviceConfig::from_json(&json).unwrap();
-        assert_eq!(deserialized.device_name, "Camera A");
-        assert_eq!(deserialized.fps, 60);
+    fn try_from_file(file_path: &str) -> Result<Self, ConfigError> {
+        let reader = BufReader::new(File::open(file_path)?);
+        let config = serde_json::from_reader(reader)?;
+        Ok(config)
     }
 }

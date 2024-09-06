@@ -1,10 +1,11 @@
-use icapture_core::ICapture;
+use icapture_core::{capture::*, config::*};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut icapture = ICapture::new("USB Capture HDMI 4K+")?;
+    let config = Config::from_file("config.json");
+    let mut capture = Capture::new(&config.device_name)?;
 
-    icapture.preview()?;
+    capture.preview()?;
 
     Ok(())
 }
