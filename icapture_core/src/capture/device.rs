@@ -1,8 +1,6 @@
 use log::debug;
 use windows::{
-    core::*,
-    Win32::Foundation::E_FAIL,
-    Win32::Media::MediaFoundation::*,
+    core::*, Win32::Foundation::E_FAIL, Win32::Media::MediaFoundation::*,
     Win32::System::Com::CoTaskMemFree,
 };
 
@@ -35,7 +33,10 @@ pub fn enumerate_capture_devices() -> Result<Vec<String>> {
 }
 
 pub fn get_capture_device_id_by_name(names: &[String], target: &str) -> Option<u32> {
-    names.iter().position(|name| name == target).and_then(|pos| pos.try_into().ok())
+    names
+        .iter()
+        .position(|name| name == target)
+        .and_then(|pos| pos.try_into().ok())
 }
 
 fn get_capture_device_name(device: &Option<IMFActivate>) -> Result<String> {
@@ -60,4 +61,26 @@ fn get_capture_device_name(device: &Option<IMFActivate>) -> Result<String> {
         return Ok(res_name);
     }
     Err(Error::new(E_FAIL, "cannot get capture device name"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_device_not_found() {
+        let names = vec![];
+        let target = "Test device 42";
+        assert_eq!(get_capture_device_id_by_name(&names, target), None);
+    }
+
+    #[test]
+    fn test_device_found() {
+        let names = vec![
+            String::from("Test device 0"),
+            String::from("Test device 1"),
+        ];
+        let target = "Test device 1";
+        assert_eq!(get_capture_device_id_by_name(&names, target), Some(1));
+    }
 }
