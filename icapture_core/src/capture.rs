@@ -1,6 +1,7 @@
 use crate::{config::Config, device, file};
 use log::{debug, warn, error};
 use opencv::{core, highgui, imgcodecs, prelude::*, videoio::*, Error, Result};
+use std::thread;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -20,10 +21,12 @@ pub enum CaptureError {
 pub struct Capture {
     config: Config,
     instance: VideoCapture,
+    grabber: Option<thread::JoinHandle<()>>
 }
 
 impl Capture {
     pub fn new(conf: &Config) -> Result<Self, CaptureError> {
+        debug!("create capture instance");
         let config = conf.clone();
         let device_name = &config.device_name;
         let data_dir = &config.data_dir;
@@ -52,14 +55,18 @@ impl Capture {
         Ok(Self {
             config,
             instance,
+            grabber: None
         })
     }
 
-    pub fn dispose(&mut self) -> Result<()> {
-        self.instance.release()
+    pub fn dispose(&mut self) -> Result<(), CaptureError> {
+        debug!("dispose capture instance");
+        self.stop_grab_video()?;
+        self.instance.release().map_err(CaptureError::from)
     }
 
     pub fn preview(&mut self) -> Result<()> {
+        debug!("preview streaming");
         let window: &str = &self.config.device_name;
         highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
         loop {
@@ -95,6 +102,26 @@ impl Capture {
     pub fn grab_frame(&mut self) -> Result<bool, CaptureError> {
         let file_path = format!("{}\\{}", &self.config.data_dir, file::get_name("png"));
         self.grab_frame_to_file(&file_path)
+    }
+
+    pub fn start_grab_video_to_file(&mut self, file_path: &str) -> Result<(), CaptureError> {
+        self.grabber = Some(thread::spawn(move || {
+            debug!("spawn grabber thread");
+        }));
+        Ok(())
+    }
+
+    pub fn start_grab_video(&mut self) -> Result<(), CaptureError> {
+        let file_path = format!("{}\\{}", &self.config.data_dir, file::get_name("avi"));
+        self.start_grab_video_to_file(&file_path)
+    }
+
+    pub fn stop_grab_video(&mut self) -> Result<(), CaptureError> {
+        if let Some(grabber) = self.grabber.take() {
+            debug!("join grabber thread");
+            grabber.join().unwrap();
+        }
+        Ok(())
     }
 
     pub fn get_fps(&self) -> Result<u32, CaptureError> {

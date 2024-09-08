@@ -9,9 +9,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let thread1 = thread::spawn(|| -> Result<(), Box<dyn Error + Send + Sync>> {
         let config = Config::from_file("config.json");
         let mut capture = Capture::new(&config)?;
-        capture.grab_frame()?;
-        thread::sleep(Duration::from_millis(5000));
-        capture.grab_frame()?;
+        capture.start_grab_video()?;
+        thread::sleep(Duration::from_millis(1000));
+        capture.stop_grab_video()?;
         capture.dispose()?;
         Ok(())
     });
@@ -19,6 +19,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let thread2 = thread::spawn(|| -> Result<(), Box<dyn Error + Send + Sync>> {
         let config = Config::from_file("config.json");
         let mut capture = Capture::new(&config)?;
+        thread::sleep(Duration::from_millis(500));
         capture.grab_frame()?;
         capture.dispose()?;
         Ok(())
