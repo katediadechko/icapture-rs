@@ -1,5 +1,5 @@
 use crate::{config::Config, device, file};
-use log::{debug, warn};
+use log::{debug, warn, error};
 use opencv::{core, highgui, imgcodecs, prelude::*, videoio::*, Error, Result};
 use thiserror::Error;
 
@@ -11,8 +11,8 @@ pub enum CaptureError {
     DeviceNotFound(String),
     #[error("cannot open capture device '{0}'")]
     DeviceOpenError(String),
-    #[error("captured an empty frame")]
-    EmptyFrame,
+    #[error("cannot grab frame")]
+    FrameError,
     #[error("opencv error: {0}")]
     OpenCvError(#[from] Error),
 }
@@ -28,7 +28,9 @@ impl Capture {
         let device_name = &config.device_name;
         let data_dir = &config.data_dir;
         if file::create_dir(data_dir).is_err() {
-            return Err(CaptureError::CreateFileDirectory(data_dir.clone()));
+            let err = CaptureError::CreateFileDirectory(data_dir.clone());
+            error!("{}", err);
+            return Err(err);
         }
 
         let device_id = Self::capture_find_device_by_name(device_name)
@@ -37,7 +39,9 @@ impl Capture {
         let mut instance = Self::capture_new_device(device_id)?;
 
         if !instance.is_opened()? {
-            return Err(CaptureError::DeviceOpenError(device_name.clone()));
+            let err = CaptureError::DeviceOpenError(device_name.clone());
+            error!("{}", err);
+            return Err(err);
         }
 
         Self::capture_set_fps(&mut instance, conf.fps)?;
@@ -76,8 +80,10 @@ impl Capture {
         debug!("grab frame to file '{}'", file_path);
         let mut frame = Mat::default();
         let success = self.instance.read(&mut frame)?;
-        if frame.empty() {
-            return Err(CaptureError::EmptyFrame);
+        if !success || frame.empty() {
+            let err = CaptureError::FrameError;
+            error!("{}", err);
+            return Err(err);
         }
         let mut params = core::Vector::default();
         params.push(imgcodecs::IMWRITE_PNG_COMPRESSION);
