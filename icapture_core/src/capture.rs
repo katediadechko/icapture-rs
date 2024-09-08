@@ -19,8 +19,8 @@ pub enum CaptureError {
 
 pub struct Capture {
     device_name: String,
+    data_dir: String,    
     instance: VideoCapture,
-    data_dir: String,
 }
 
 impl Capture {
@@ -47,8 +47,8 @@ impl Capture {
 
         Ok(Self {
             device_name,
+            data_dir,            
             instance,
-            data_dir
         })
     }
 
@@ -91,22 +91,22 @@ impl Capture {
         self.grab_frame_to_file(&file_path)
     }
 
-    pub fn get_fps(&self) -> Result<u32> {
-        Self::capture_get_fps(&self.instance)
+    pub fn get_fps(&self) -> Result<u32, CaptureError> {
+        Self::capture_get_fps(&self.instance).map_err(CaptureError::from)
     }
 
-    pub fn get_frame_size(&self) -> Result<(u32, u32)> {
-        Self::capture_get_frame_size(&self.instance)
+    pub fn get_frame_size(&self) -> Result<(u32, u32), CaptureError> {
+        Self::capture_get_frame_size(&self.instance).map_err(CaptureError::from)
     }
 
-    pub fn set_fps(&mut self, fps: u32) -> Result<bool> {
-        Self::capture_set_fps(&mut self.instance, fps)?;
-        Self::capture_verify_fps(&self.instance, fps)
+    pub fn set_fps(&mut self, fps: u32) -> Result<bool, CaptureError> {
+        Self::capture_set_fps(&mut self.instance, fps).map_err(CaptureError::from)?;
+        Self::capture_verify_fps(&self.instance, fps).map_err(CaptureError::from)
     }
 
-    pub fn set_frame_size(&mut self, size: (u32, u32)) -> Result<bool> {
-        Self::capture_set_frame_size(&mut self.instance, size)?;
-        Self::capture_verify_frame_size(&self.instance, size)
+    pub fn set_frame_size(&mut self, size: (u32, u32)) -> Result<bool, CaptureError> {
+        Self::capture_set_frame_size(&mut self.instance, size).map_err(CaptureError::from)?;
+        Self::capture_verify_frame_size(&self.instance, size).map_err(CaptureError::from)
     }
 
     fn capture_find_device_by_name(name: &str) -> Option<u32> {
@@ -147,7 +147,10 @@ impl Capture {
         Ok(width_set && height_set)
     }
 
-    fn capture_verify_fps(capture: &VideoCapture, expected_fps: u32) -> Result<bool, Error> {
+    fn capture_verify_fps(
+        capture: &VideoCapture,
+        expected_fps: u32,
+    ) -> Result<bool, opencv::Error> {
         let actual_fps = Self::capture_get_fps(capture)?;
         let success = actual_fps == expected_fps;
         if !success {
@@ -162,7 +165,7 @@ impl Capture {
     fn capture_verify_frame_size(
         capture: &VideoCapture,
         expected_size: (u32, u32),
-    ) -> Result<bool, Error> {
+    ) -> Result<bool, opencv::Error> {
         let actual_size = Self::capture_get_frame_size(capture)?;
         let success = actual_size == expected_size;
 
