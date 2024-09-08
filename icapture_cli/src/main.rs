@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let config = Config::from_file("config.json");
         let mut capture = Capture::new(&config)?;
         capture.start_grab_video()?;
-        thread::sleep(Duration::from_millis(1000));
+        thread::sleep(Duration::from_millis(10000));
         capture.stop_grab_video()?;
         capture.dispose()?;
         Ok(())
@@ -20,7 +20,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         let config = Config::from_file("config.json");
         let mut capture = Capture::new(&config)?;
         thread::sleep(Duration::from_millis(500));
-        capture.grab_frame()?;
+        let _ = capture.grab_frame(); // returns error
+        thread::sleep(Duration::from_millis(2500));
+        _ = capture.preview(); // return error
         capture.dispose()?;
         Ok(())
     });

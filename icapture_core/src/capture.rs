@@ -1,7 +1,20 @@
 use crate::{config::Config, device, file};
-use log::{debug, warn, error};
-use opencv::{core, highgui, imgcodecs, prelude::*, videoio::*, Error, Result};
-use std::thread;
+use log::{debug, error, warn};
+use opencv::{
+    core::{self, Size},
+    highgui, imgcodecs,
+    prelude::*,
+    videoio::*,
+    Error, Result,
+};
+use std::{
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    },
+    thread,
+    time::{Duration, Instant},
+};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -16,12 +29,16 @@ pub enum CaptureError {
     FrameError,
     #[error("opencv error: {0}")]
     OpenCvError(#[from] Error),
+    #[error("resource is busy")]
+    ResourceBusyError,
 }
+
+static IS_GRABBING: AtomicBool = AtomicBool::new(false);
 
 pub struct Capture {
     config: Config,
-    instance: VideoCapture,
-    grabber: Option<thread::JoinHandle<()>>
+    capture: Arc<Mutex<VideoCapture>>,
+    writer: Arc<Mutex<Option<VideoWriter>>>,
 }
 
 impl Capture {
@@ -39,7 +56,7 @@ impl Capture {
         let device_id = Self::capture_find_device_by_name(device_name)
             .ok_or_else(|| CaptureError::DeviceNotFound(device_name.clone()))?;
 
-        let mut instance = Self::capture_new_device(device_id)?;
+        let mut instance = Self::new_capture(device_id)?;
 
         if !instance.is_opened()? {
             let err = CaptureError::DeviceOpenError(device_name.clone());
@@ -54,24 +71,34 @@ impl Capture {
 
         Ok(Self {
             config,
-            instance,
-            grabber: None
+            capture: Arc::new(Mutex::new(instance)),
+            writer: Arc::new(Mutex::new(None)),
         })
     }
 
     pub fn dispose(&mut self) -> Result<(), CaptureError> {
         debug!("dispose capture instance");
-        self.stop_grab_video()?;
-        self.instance.release().map_err(CaptureError::from)
+        self.capture
+            .lock()
+            .unwrap()
+            .release()
+            .map_err(CaptureError::from)
     }
 
-    pub fn preview(&mut self) -> Result<()> {
+    pub fn preview(&mut self) -> Result<(), CaptureError> {
         debug!("preview streaming");
+        if IS_GRABBING.load(Ordering::Relaxed) {
+            let err = CaptureError::ResourceBusyError;
+            error!("{}", err);
+            return Err(err);
+        }
+        IS_GRABBING.store(true, Ordering::Relaxed);
+
         let window: &str = &self.config.device_name;
         highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
         loop {
             let mut frame = Mat::default();
-            self.instance.read(&mut frame)?;
+            self.capture.lock().unwrap().read(&mut frame)?;
             if frame.size()?.width > 0 {
                 highgui::imshow(window, &frame)?;
             }
@@ -80,13 +107,21 @@ impl Capture {
                 break;
             }
         }
+        IS_GRABBING.store(false, Ordering::Relaxed);
         Ok(())
     }
 
     pub fn grab_frame_to_file(&mut self, file_path: &str) -> Result<bool, CaptureError> {
         debug!("grab frame to file '{}'", file_path);
+        if IS_GRABBING.load(Ordering::Relaxed) {
+            let err = CaptureError::ResourceBusyError;
+            error!("{}", err);
+            return Err(err);
+        }
+        IS_GRABBING.store(true, Ordering::Relaxed);
+
         let mut frame = Mat::default();
-        let success = self.instance.read(&mut frame)?;
+        let success = self.capture.lock().unwrap().read(&mut frame)?;
         if !success || frame.empty() {
             let err = CaptureError::FrameError;
             error!("{}", err);
@@ -96,6 +131,7 @@ impl Capture {
         params.push(imgcodecs::IMWRITE_PNG_COMPRESSION);
         params.push(0);
         imgcodecs::imwrite(file_path, &frame, &params)?;
+        IS_GRABBING.store(false, Ordering::Relaxed);
         Ok(success)
     }
 
@@ -104,45 +140,100 @@ impl Capture {
         self.grab_frame_to_file(&file_path)
     }
 
-    pub fn start_grab_video_to_file(&mut self, file_path: &str) -> Result<(), CaptureError> {
-        self.grabber = Some(thread::spawn(move || {
+    pub fn start_grab_video_to_file(&mut self, file_path: &str) -> Result<bool, CaptureError> {
+        debug!("grab video to file '{}'", file_path);
+        if IS_GRABBING.load(Ordering::Relaxed) {
+            let err = CaptureError::ResourceBusyError;
+            error!("{}", err);
+            return Err(err);
+        }
+        IS_GRABBING.store(true, Ordering::Relaxed);
+
+        let capture = Arc::clone(&self.capture);
+        let writer = Arc::clone(&self.writer);
+
+        let fps = self.get_fps()?;
+        let frame_size = self.get_frame_size()?;
+        let file_path = file_path.to_string();
+
+        let fourcc = VideoWriter::fourcc('M', 'J', 'P', 'G')?;
+        let mut writer_loc = writer.lock().unwrap();
+        *writer_loc = Some(VideoWriter::new(
+            &file_path,
+            fourcc,
+            fps as f64,
+            Size::new(frame_size.0 as i32, frame_size.1 as i32),
+            true,
+        )?);
+        drop(writer_loc);
+
+        thread::spawn(move || {
             debug!("spawn grabber thread");
-        }));
-        Ok(())
+
+            let start_time = Instant::now();
+            let mut frame_count: u64 = 0;
+
+            while IS_GRABBING.load(Ordering::Relaxed) {
+                let elapsed = start_time.elapsed();
+                let target_frame_count = (elapsed.as_secs_f64() * fps as f64).floor() as u64;
+
+                if frame_count < target_frame_count {
+                    let mut frame = Mat::default();
+                    if capture.lock().unwrap().read(&mut frame).unwrap() {
+                        writer
+                            .lock()
+                            .unwrap()
+                            .as_mut()
+                            .unwrap()
+                            .write(&frame)
+                            .unwrap();
+                    }
+                    frame_count += 1;
+                } else {
+                    thread::sleep(Duration::from_millis(1));
+                }
+            }
+
+            let mut writer_lock = writer.lock().unwrap();
+            *writer_lock = None;
+        });
+
+        Ok(true)
     }
 
-    pub fn start_grab_video(&mut self) -> Result<(), CaptureError> {
+    pub fn start_grab_video(&mut self) -> Result<bool, CaptureError> {
         let file_path = format!("{}\\{}", &self.config.data_dir, file::get_name("avi"));
         self.start_grab_video_to_file(&file_path)
     }
 
     pub fn stop_grab_video(&mut self) -> Result<(), CaptureError> {
-        if let Some(grabber) = self.grabber.take() {
-            debug!("join grabber thread");
-            grabber.join().unwrap();
-        }
+        debug!("stop grabber thread");
+        IS_GRABBING.store(false, Ordering::Relaxed);
         Ok(())
     }
 
     pub fn get_fps(&self) -> Result<u32, CaptureError> {
-        Self::capture_get_fps(&self.instance).map_err(CaptureError::from)
+        Self::capture_get_fps(&self.capture.lock().unwrap()).map_err(CaptureError::from)
     }
 
     pub fn get_frame_size(&self) -> Result<(u32, u32), CaptureError> {
-        Self::capture_get_frame_size(&self.instance).map_err(CaptureError::from)
+        Self::capture_get_frame_size(&self.capture.lock().unwrap()).map_err(CaptureError::from)
     }
 
     pub fn set_fps(&mut self, fps: u32) -> Result<bool, CaptureError> {
-        Self::capture_set_fps(&mut self.instance, fps).map_err(CaptureError::from)?;
+        Self::capture_set_fps(&mut (self.capture.lock().unwrap()), fps)
+            .map_err(CaptureError::from)?;
         self.config.fps = fps;
-        Self::capture_verify_fps(&self.instance, fps).map_err(CaptureError::from)
+        Self::capture_verify_fps(&self.capture.lock().unwrap(), fps).map_err(CaptureError::from)
     }
 
     pub fn set_frame_size(&mut self, size: (u32, u32)) -> Result<bool, CaptureError> {
-        Self::capture_set_frame_size(&mut self.instance, size).map_err(CaptureError::from)?;
+        Self::capture_set_frame_size(&mut (self.capture.lock().unwrap()), size)
+            .map_err(CaptureError::from)?;
         self.config.frame_width = size.0;
         self.config.frame_height = size.1;
-        Self::capture_verify_frame_size(&self.instance, size).map_err(CaptureError::from)
+        Self::capture_verify_frame_size(&self.capture.lock().unwrap(), size)
+            .map_err(CaptureError::from)
     }
 
     fn capture_find_device_by_name(name: &str) -> Option<u32> {
@@ -150,7 +241,7 @@ impl Capture {
         device::get_capture_device_id_by_name(&devices, name)
     }
 
-    fn capture_new_device(device_id: u32) -> Result<VideoCapture, opencv::Error> {
+    fn new_capture(device_id: u32) -> Result<VideoCapture> {
         VideoCapture::new(device_id as i32, CAP_MSMF)
     }
 
