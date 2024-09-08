@@ -19,7 +19,7 @@ pub enum CaptureError {
 
 pub struct Capture {
     device_name: String,
-    data_dir: String,    
+    data_dir: String,
     instance: VideoCapture,
 }
 
@@ -47,7 +47,7 @@ impl Capture {
 
         Ok(Self {
             device_name,
-            data_dir,            
+            data_dir,
             instance,
         })
     }
