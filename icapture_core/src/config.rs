@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io;
 use std::io::BufReader;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Config {
     pub device_name: String,
     pub fps: u32,

@@ -18,20 +18,20 @@ pub enum CaptureError {
 }
 
 pub struct Capture {
-    device_name: String,
-    data_dir: String,
+    config: Config,
     instance: VideoCapture,
 }
 
 impl Capture {
     pub fn new(conf: &Config) -> Result<Self, CaptureError> {
-        let device_name = conf.device_name.clone();
-        let data_dir = conf.data_dir.clone();
-        if file::create_dir(&data_dir).is_err() {
+        let config = conf.clone();
+        let device_name = &config.device_name;
+        let data_dir = &config.data_dir;
+        if file::create_dir(data_dir).is_err() {
             return Err(CaptureError::CreateFileDirectory(data_dir.clone()));
         }
 
-        let device_id = Self::capture_find_device_by_name(&device_name)
+        let device_id = Self::capture_find_device_by_name(device_name)
             .ok_or_else(|| CaptureError::DeviceNotFound(device_name.clone()))?;
 
         let mut instance = Self::capture_new_device(device_id)?;
@@ -46,8 +46,7 @@ impl Capture {
         Self::capture_verify_frame_size(&instance, (conf.frame_width, conf.frame_height))?;
 
         Ok(Self {
-            device_name,
-            data_dir,
+            config,
             instance,
         })
     }
@@ -57,7 +56,7 @@ impl Capture {
     }
 
     pub fn preview(&mut self) -> Result<()> {
-        let window: &str = self.device_name.as_str();
+        let window: &str = &self.config.device_name;
         highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
         loop {
             let mut frame = Mat::default();
@@ -74,6 +73,7 @@ impl Capture {
     }
 
     pub fn grab_frame_to_file(&mut self, file_path: &str) -> Result<bool, CaptureError> {
+        debug!("grab frame to file '{}'", file_path);
         let mut frame = Mat::default();
         let success = self.instance.read(&mut frame)?;
         if frame.empty() {
@@ -87,7 +87,7 @@ impl Capture {
     }
 
     pub fn grab_frame(&mut self) -> Result<bool, CaptureError> {
-        let file_path = format!("{}\\{}", self.data_dir, file::get_name("png"));
+        let file_path = format!("{}\\{}", &self.config.data_dir, file::get_name("png"));
         self.grab_frame_to_file(&file_path)
     }
 
@@ -101,11 +101,14 @@ impl Capture {
 
     pub fn set_fps(&mut self, fps: u32) -> Result<bool, CaptureError> {
         Self::capture_set_fps(&mut self.instance, fps).map_err(CaptureError::from)?;
+        self.config.fps = fps;
         Self::capture_verify_fps(&self.instance, fps).map_err(CaptureError::from)
     }
 
     pub fn set_frame_size(&mut self, size: (u32, u32)) -> Result<bool, CaptureError> {
         Self::capture_set_frame_size(&mut self.instance, size).map_err(CaptureError::from)?;
+        self.config.frame_width = size.0;
+        self.config.frame_height = size.1;
         Self::capture_verify_frame_size(&self.instance, size).map_err(CaptureError::from)
     }
 
