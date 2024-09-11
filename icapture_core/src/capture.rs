@@ -53,10 +53,14 @@ impl Capture {
             return Err(err);
         }
 
-        let device_id = Self::capture_find_device_by_name(device_name)
-            .ok_or_else(|| CaptureError::DeviceNotFound(device_name.clone()))?;
+        let device_id = Self::capture_find_device_by_name(device_name);
+        if device_id.is_none() {
+            let err = CaptureError::DeviceNotFound(device_name.clone());
+            error!("{}", err);
+            return Err(err);
+        }            
 
-        let mut instance = Self::new_capture(device_id)?;
+        let mut instance = Self::new_capture(device_id.unwrap())?;
 
         if !instance.is_opened()? {
             let err = CaptureError::DeviceOpenError(device_name.clone());

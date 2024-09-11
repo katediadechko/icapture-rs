@@ -44,8 +44,8 @@ impl Default for Config {
 }
 
 impl Config {
-    pub fn from_file(file_path: &str) -> Self {
-        match Self::try_from_file(file_path) {
+    pub fn new(file_path: &str) -> Self {
+        match Self::load_from_file(file_path) {
             Ok(config) => config,
             Err(_) => {
                 warn!("cannot read config file '{file_path}'");
@@ -58,7 +58,7 @@ impl Config {
         }
     }
 
-    fn try_from_file(file_path: &str) -> Result<Self, ConfigError> {
+    fn load_from_file(file_path: &str) -> Result<Self, ConfigError> {
         let reader = BufReader::new(File::open(file_path)?);
         let config = serde_json::from_reader(reader)?;
         Ok(config)
@@ -83,7 +83,7 @@ mod tests {
         let json = serde_json::to_string(&config).unwrap();
         let file_path = "test_config.json";
         fs::write(file_path, json).unwrap();
-        let loaded_config = Config::from_file(file_path);
+        let loaded_config = Config::new(file_path);
         assert_eq!(loaded_config, config);
         fs::remove_file(file_path).unwrap();
     }
@@ -91,7 +91,7 @@ mod tests {
     #[test]
     fn test_from_invalid_file_defaults() {
         let file_path = "invalid_test_config.json";
-        let loaded_config = Config::from_file(file_path);
+        let loaded_config = Config::new(file_path);
         assert_eq!(loaded_config, Config::default());
     }
 }

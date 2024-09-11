@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     env_logger::builder().format_timestamp_millis().init();
 
     let thread1 = thread::spawn(|| -> Result<(), Box<dyn Error + Send + Sync>> {
-        let config = Config::from_file("config.json");
+        let config = Config::new("config.json");
         let mut capture = Capture::new(&config)?;
         capture.start_grab_video()?;
         thread::sleep(Duration::from_millis(10000));
@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     });
 
     let thread2 = thread::spawn(|| -> Result<(), Box<dyn Error + Send + Sync>> {
-        let config = Config::from_file("config.json");
+        let config = Config::new("config.json");
         let mut capture = Capture::new(&config)?;
         thread::sleep(Duration::from_millis(500));
         let _ = capture.grab_frame(); // returns error
