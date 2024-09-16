@@ -27,6 +27,21 @@ pub(crate) async fn init_capture(config: ConfigPath, state: CaptureState) -> Res
     }))
 }
 
+pub(crate) async fn grab_frame(state: CaptureState) -> Result<impl Reply> {
+    let mut state = state.lock().unwrap();
+    if let Some(mut capture) = state.take() {
+        capture
+            .grab_frame()
+            .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
+
+        Ok(warp::reply::json(&StatusResponse {
+            message: "Frame grabbed".to_string(),
+        }))
+    } else {
+        Err(warp::reject::custom(ApiError::CaptureNotInitialized))
+    }
+}
+
 pub(crate) async fn start_grab_video(state: CaptureState) -> Result<impl Reply> {
     let mut state = state.lock().unwrap();
     if let Some(capture) = state.as_mut() {
@@ -51,6 +66,21 @@ pub(crate) async fn stop_grab_video(state: CaptureState) -> Result<impl Reply> {
 
         Ok(warp::reply::json(&StatusResponse {
             message: "Video grab stopped".to_string(),
+        }))
+    } else {
+        Err(warp::reject::custom(ApiError::CaptureNotInitialized))
+    }
+}
+
+pub(crate) async fn dispose_capture(state: CaptureState) -> Result<impl Reply> {
+    let mut state = state.lock().unwrap();
+    if let Some(mut capture) = state.take() {
+        capture
+            .dispose()
+            .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
+
+        Ok(warp::reply::json(&StatusResponse {
+            message: "Capture disposed".to_string(),
         }))
     } else {
         Err(warp::reject::custom(ApiError::CaptureNotInitialized))

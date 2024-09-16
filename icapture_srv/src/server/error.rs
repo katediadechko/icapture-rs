@@ -18,7 +18,9 @@ pub(crate) enum ApiError {
 }
 impl warp::reject::Reject for ApiError {}
 
-pub(crate) async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply, Infallible> {
+pub(crate) async fn handle_rejection(
+    err: Rejection,
+) -> std::result::Result<impl Reply, Infallible> {
     let (code, message) = if let Some(e) = err.find::<ApiError>() {
         match e {
             ApiError::CaptureError(CaptureError::CreateFileDirectory(path)) => (

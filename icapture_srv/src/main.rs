@@ -15,6 +15,11 @@ fn main() {
         .and(with_state(state.clone()))
         .and_then(init_capture);
 
+    let grab = warp::post()
+        .and(warp::path("frame"))
+        .and(with_state(state.clone()))
+        .and_then(grab_frame);
+
     let start = warp::post()
         .and(warp::path("start"))
         .and(with_state(state.clone()))
@@ -25,7 +30,17 @@ fn main() {
         .and(with_state(state.clone()))
         .and_then(stop_grab_video);
 
-    let routes = init.or(start).or(stop).recover(error::handle_rejection);
+    let dispose = warp::post()
+        .and(warp::path("deinit"))
+        .and(with_state(state.clone()))
+        .and_then(dispose_capture);
+
+    let routes = init
+        .or(grab)
+        .or(start)
+        .or(stop)
+        .or(dispose)
+        .recover(error::handle_rejection);
 
     let rt = Runtime::new().unwrap();
     rt.block_on(async {
