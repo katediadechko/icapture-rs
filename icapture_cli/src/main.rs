@@ -1,4 +1,4 @@
-use icapture_core::{codec::*, capture::*, config::*};
+use icapture_core::{capture::*, config::*};
 use std::error::Error;
 use std::thread;
 use std::time::Duration;
@@ -9,7 +9,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let thread1 = thread::spawn(|| -> Result<(), Box<dyn Error + Send + Sync>> {
         let config = Config::new("config.json");
         let mut capture = Capture::new(&config)?;
-        capture.start_grab_video(&Codec::H264)?;
+        capture.start_grab_video()?;
         thread::sleep(Duration::from_millis(10000));
         capture.stop_grab_video()?;
         capture.dispose()?;

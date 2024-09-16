@@ -3,5 +3,6 @@
     "fps": 60,
     "frame_width": 1920,
     "frame_height": 1080,
-    "data_dir": "c:\\icapture_data"
+    "data_dir": "c:\\icapture_data",
+    "codec": "H264"
 }

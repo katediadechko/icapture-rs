@@ -1,6 +1,7 @@
 use opencv::{videoio, Result};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Codec {
     MJPG,
     H264,

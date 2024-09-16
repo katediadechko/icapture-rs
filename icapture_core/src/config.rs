@@ -1,8 +1,10 @@
-use log::warn;
+use log::{debug, warn};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io;
 use std::io::BufReader;
+
+use crate::codec::Codec;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Config {
@@ -11,6 +13,7 @@ pub struct Config {
     pub frame_width: u32,
     pub frame_height: u32,
     pub data_dir: String,
+    pub codec: Codec,
 }
 
 #[derive(Debug)]
@@ -39,6 +42,7 @@ impl Default for Config {
             frame_width: 1920,
             frame_height: 1080,
             data_dir: String::from("c:\\icapture_data"),
+            codec: Codec::H264,
         }
     }
 }
@@ -46,7 +50,10 @@ impl Default for Config {
 impl Config {
     pub fn new(file_path: &str) -> Self {
         match Self::load_from_file(file_path) {
-            Ok(config) => config,
+            Ok(config) => {
+                debug!("using configuration {:?}", &config);
+                config
+            },
             Err(_) => {
                 warn!("cannot read config file '{file_path}'");
                 warn!(
@@ -79,6 +86,7 @@ mod tests {
             frame_width: 2560,
             frame_height: 1440,
             data_dir: "Test directory".to_string(),
+            codec: Codec::DIVX,
         };
         let json = serde_json::to_string(&config).unwrap();
         let file_path = "test_config.json";

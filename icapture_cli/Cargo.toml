@@ -5,6 +5,7 @@ edition = "2021"
 description = "Command line interface for capturing images and video on Windows"
 repository = "https://github.com/katediadechko/icapture-rs"
 license = "MIT"
+default-run = "icapture_cli"
 
 [dependencies]
 env_logger = "0.11.5"

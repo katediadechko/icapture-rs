@@ -5,7 +5,7 @@ edition = "2021"
 description = "Server for capturing images and video on Windows"
 repository = "https://github.com/katediadechko/icapture-rs"
 license = "MIT"
-default-run = "icapture_srv"
+#default-run = "icapture_srv"
 
 [dependencies]
 serde = { version = "1.0.210", features = ["derive"] }

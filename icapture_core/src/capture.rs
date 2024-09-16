@@ -1,4 +1,4 @@
-use crate::{codec::Codec, config::Config, device, file};
+use crate::{config::Config, device, file};
 use log::{debug, error, warn};
 use opencv::{
     core::{self, Size},
@@ -58,7 +58,7 @@ impl Capture {
             let err = CaptureError::DeviceNotFound(device_name.clone());
             error!("{}", err);
             return Err(err);
-        }            
+        }
 
         let mut instance = Self::new_capture(device_id.unwrap())?;
 
@@ -144,7 +144,7 @@ impl Capture {
         self.grab_frame_to_file(&file_path)
     }
 
-    pub fn start_grab_video_to_file(&mut self, file_path: &str, codec: &Codec) -> Result<bool, CaptureError> {
+    pub fn start_grab_video_to_file(&mut self, file_path: &str) -> Result<bool, CaptureError> {
         debug!("grab video to file '{}'", file_path);
         if IS_GRABBING.load(Ordering::Relaxed) {
             let err = CaptureError::ResourceBusyError;
@@ -160,7 +160,7 @@ impl Capture {
         let frame_size = self.get_frame_size()?;
         let file_path = file_path.to_string();
 
-        let fourcc = codec.fourcc()?;
+        let fourcc = self.config.codec.fourcc()?;
         let mut writer_loc = writer.lock().unwrap();
         *writer_loc = Some(VideoWriter::new(
             &file_path,
@@ -205,9 +205,13 @@ impl Capture {
         Ok(true)
     }
 
-    pub fn start_grab_video(&mut self, codec: &Codec) -> Result<bool, CaptureError> {
-        let file_path = format!("{}\\{}", &self.config.data_dir, file::get_name(codec.file_extension()));
-        self.start_grab_video_to_file(&file_path, codec)
+    pub fn start_grab_video(&mut self) -> Result<bool, CaptureError> {
+        let file_path = format!(
+            "{}\\{}",
+            &self.config.data_dir,
+            file::get_name(self.config.codec.file_extension())
+        );
+        self.start_grab_video_to_file(&file_path)
     }
 
     pub fn stop_grab_video(&mut self) -> Result<(), CaptureError> {
