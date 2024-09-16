@@ -42,6 +42,8 @@ Client-server application for capturing images and video on Windows.
 
 ## Run
 
+### Command Line
+
 1. icapture-rs uses [env_logger](https://docs.rs/env_logger/latest/env_logger/index.html) for logging and tracing. Set the `RUST_LOG` environment variable to manage the logging level and scope. For instance,
 
    ```
@@ -50,7 +52,23 @@ Client-server application for capturing images and video on Windows.
 
 2. Make sure the configuration file `config.json` is located in the current directory. Update the configuration if necessary. If the file is not present or invalid, default capturing parameters will be used.
 
-3. Run with `cargo run` or `icapture_cli.exe`.
+3. Run with `icapture_cli.exe`.
+
+### REST Server
+
+1. Run with `cargo run` or `icapture_srv.exe`.
+
+2. The available endpoints are the following.
+
+   The `init` endpoint requires a request body indicating the full path to the configuration file, e.g. `{ "path": "C:\\config.json" }`. If the file is not present or invalid, default capturing parameters will be used.
+
+   ```
+   POST http://localhost:1212/init     # initialize capturing
+   POST http://localhost:1212/frame    # grab the current frame
+   POST http://localhost:1212/start    # start grabbing frames
+   POST http://localhost:1212/stop     # stop grabbing frames
+   POST http://localhost:1212/deinit   # de-initialize capturing
+   ```
 
 ## Test
 
