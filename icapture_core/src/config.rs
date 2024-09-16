@@ -53,7 +53,7 @@ impl Config {
             Ok(config) => {
                 debug!("using configuration {:?}", &config);
                 config
-            },
+            }
             Err(_) => {
                 warn!("cannot read config file '{file_path}'");
                 warn!(

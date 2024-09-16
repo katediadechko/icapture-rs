@@ -76,10 +76,7 @@ mod tests {
 
     #[test]
     fn test_device_found() {
-        let names = vec![
-            String::from("Test device 0"),
-            String::from("Test device 1"),
-        ];
+        let names = vec![String::from("Test device 0"), String::from("Test device 1")];
         let target = "Test device 1";
         assert_eq!(get_capture_device_id_by_name(&names, target), Some(1));
     }

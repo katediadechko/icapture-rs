@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         capture.dispose()?;
         Ok(())
     });
-/*
+
     let thread2 = thread::spawn(|| -> Result<(), Box<dyn Error + Send + Sync>> {
         let config = Config::new("config.json");
         let mut capture = Capture::new(&config)?;
@@ -26,9 +26,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         capture.dispose()?;
         Ok(())
     });
-*/
+
     let _ = thread1.join().unwrap();
-//    let _ = thread2.join().unwrap();
+    let _ = thread2.join().unwrap();
 
     Ok(())
 }
