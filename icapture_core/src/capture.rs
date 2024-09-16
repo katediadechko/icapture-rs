@@ -1,4 +1,4 @@
-use crate::{config::Config, device, file};
+use crate::config::Config;
 use log::{debug, error, warn};
 use opencv::{
     core::{self, Size},
@@ -17,6 +17,10 @@ use std::{
 };
 use thiserror::Error;
 
+pub mod codec;
+mod device;
+mod file;
+
 #[derive(Error, Debug)]
 pub enum CaptureError {
     #[error("cannot create file or directory '{0}'")]
@@ -25,7 +29,7 @@ pub enum CaptureError {
     DeviceNotFound(String),
     #[error("cannot open capture device '{0}'")]
     DeviceOpenError(String),
-    #[error("cannot grab frame")]
+    #[error("cannot grab a frame")]
     FrameError,
     #[error("opencv error: {0}")]
     OpenCvError(#[from] Error),
@@ -36,7 +40,7 @@ pub enum CaptureError {
 static IS_GRABBING: AtomicBool = AtomicBool::new(false);
 
 pub struct Capture {
-    config: Config,
+    pub config: Config,
     capture: Arc<Mutex<VideoCapture>>,
     writer: Arc<Mutex<Option<VideoWriter>>>,
 }

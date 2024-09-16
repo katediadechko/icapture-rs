@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io;
 use std::io::BufReader;
 
-use crate::codec::Codec;
+use crate::capture::codec::Codec;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Config {
