@@ -29,7 +29,7 @@ pub(crate) async fn init_capture(config: ConfigPath, state: CaptureState) -> Res
 
 pub(crate) async fn grab_frame(state: CaptureState) -> Result<impl Reply> {
     let mut state = state.lock().unwrap();
-    if let Some(mut capture) = state.take() {
+    if let Some(capture) = state.as_mut() {
         capture
             .grab_frame()
             .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
