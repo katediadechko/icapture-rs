@@ -1,5 +1,4 @@
 use icapture_core::{capture::*, config::*};
-use serde::Deserialize;
 use std::sync::{Arc, Mutex};
 use warp::{reject::Rejection, Reply};
 
@@ -9,14 +8,9 @@ use error::*;
 type Result<T> = std::result::Result<T, Rejection>;
 pub(crate) type CaptureState = Arc<Mutex<Option<Capture>>>;
 
-#[derive(Deserialize)]
-pub(crate) struct ConfigPath {
-    path: String,
-}
 
-pub(crate) async fn init_capture(config: ConfigPath, state: CaptureState) -> Result<impl Reply> {
-    let config = Config::new(&config.path);
-    let capture = Capture::new(&config.clone())
+pub(crate) async fn init_capture(config: Config, state: CaptureState) -> Result<impl Reply> {
+    let capture = Capture::new(&config)
         .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
 
     let mut state = state.lock().unwrap();

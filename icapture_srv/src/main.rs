@@ -7,6 +7,8 @@ mod server;
 use server::*;
 
 fn main() {
+    env_logger::builder().format_timestamp_millis().init();
+    
     let state = Arc::new(Mutex::new(None::<Capture>));
 
     let init = warp::post()
