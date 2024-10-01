@@ -17,7 +17,7 @@ pub(crate) async fn init_capture(config: Config, state: CaptureState) -> Result<
     *state = Some(capture);
 
     Ok(warp::reply::json(&error::StatusResponse {
-        message: format!("Capture initialized successfully: {:?}", &config),
+        message: format!("capture initialized successfully: {:?}", &config),
     }))
 }
 
@@ -29,7 +29,7 @@ pub(crate) async fn grab_frame(state: CaptureState) -> Result<impl Reply> {
             .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
 
         Ok(warp::reply::json(&StatusResponse {
-            message: "Frame grabbed".to_string(),
+            message: "frame grabbed".to_string(),
         }))
     } else {
         Err(warp::reject::custom(ApiError::CaptureNotInitialized))
@@ -44,7 +44,7 @@ pub(crate) async fn start_grab_video(state: CaptureState) -> Result<impl Reply> 
             .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
 
         Ok(warp::reply::json(&StatusResponse {
-            message: "Video grab started".to_string(),
+            message: "video grab started".to_string(),
         }))
     } else {
         Err(warp::reject::custom(ApiError::CaptureNotInitialized))
@@ -59,7 +59,7 @@ pub(crate) async fn stop_grab_video(state: CaptureState) -> Result<impl Reply> {
             .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
 
         Ok(warp::reply::json(&StatusResponse {
-            message: "Video grab stopped".to_string(),
+            message: "video grab stopped".to_string(),
         }))
     } else {
         Err(warp::reject::custom(ApiError::CaptureNotInitialized))
@@ -74,7 +74,7 @@ pub(crate) async fn dispose_capture(state: CaptureState) -> Result<impl Reply> {
             .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
 
         Ok(warp::reply::json(&StatusResponse {
-            message: "Capture disposed".to_string(),
+            message: "capture disposed".to_string(),
         }))
     } else {
         Err(warp::reject::custom(ApiError::CaptureNotInitialized))

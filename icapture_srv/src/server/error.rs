@@ -11,9 +11,9 @@ pub(crate) struct StatusResponse {
 
 #[derive(Error, Debug)]
 pub(crate) enum ApiError {
-    #[error("Capture error: {0}")]
+    #[error("capture error: {0}")]
     CaptureError(#[from] CaptureError),
-    #[error("Capture not initialized")]
+    #[error("capture not initialized")]
     CaptureNotInitialized,
 }
 impl warp::reject::Reject for ApiError {}
@@ -25,37 +25,37 @@ pub(crate) async fn handle_rejection(
         match e {
             ApiError::CaptureError(CaptureError::CreateFileDirectory(path)) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Cannot create file or directory '{}'", path),
+                format!("cannot create file or directory '{}'", path),
             ),
             ApiError::CaptureError(CaptureError::DeviceNotFound(device)) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Cannot find capture device '{}'", device),
+                format!("cannot find capture device '{}'", device),
             ),
             ApiError::CaptureError(CaptureError::DeviceOpenError(device)) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Cannot find capture device '{}'", device),
+                format!("cannot find capture device '{}'", device),
             ),
             ApiError::CaptureError(CaptureError::FrameError) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
-                "Cannot grab a frame".to_string(),
+                "cannot grab a frame".to_string(),
             ),
             ApiError::CaptureError(CaptureError::OpenCvError(error)) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("OpenCV error: {}", error),
+                format!("opencv error: {}", error),
             ),
             ApiError::CaptureError(CaptureError::ResourceBusyError) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
-                "Resource is busy".to_string(),
+                "resource is busy".to_string(),
             ),
             ApiError::CaptureNotInitialized => (
                 warp::http::StatusCode::BAD_REQUEST,
-                "Capture not initialized".to_string(),
+                "capture not initialized".to_string(),
             ),
         }
     } else {
         (
             warp::http::StatusCode::INTERNAL_SERVER_ERROR,
-            "Unhandled error".to_string(),
+            "unhandled error".to_string(),
         )
     };
 

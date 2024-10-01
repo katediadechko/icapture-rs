@@ -51,13 +51,13 @@ impl Config {
     pub fn new(file_path: &str) -> Self {
         match Self::load_from_file(file_path) {
             Ok(config) => {
-                debug!("using configuration {:?}", &config);
+                debug!("using config {:?}", &config);
                 config
             }
             Err(_) => {
                 warn!("cannot read config file '{file_path}'");
                 warn!(
-                    "falling back to default configuration {:?}",
+                    "falling back to default config {:?}",
                     Self::default()
                 );
                 Self::default()

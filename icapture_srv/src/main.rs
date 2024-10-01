@@ -1,19 +1,24 @@
-use icapture_core::capture::Capture;
+use icapture_core::{capture::Capture, config::Config};
+use log::warn;
 use std::sync::{Arc, Mutex};
 use tokio::runtime::Runtime;
-use warp::Filter;
+use warp::{Filter, Rejection};
 
 mod server;
 use server::*;
 
 fn main() {
     env_logger::builder().format_timestamp_millis().init();
-    
+    let log = warp::log("icapture_srv::api");
+
     let state = Arc::new(Mutex::new(None::<Capture>));
 
     let init = warp::post()
         .and(warp::path("init"))
-        .and(warp::body::json())
+        .and(warp::body::json().or_else(|_| async {
+            warn!("cannot parse request body, falling back to default config");
+            Ok::<(Config,), Rejection>((Config::default(),))
+        }))
         .and(with_state(state.clone()))
         .and_then(init_capture);
 
@@ -42,7 +47,8 @@ fn main() {
         .or(start)
         .or(stop)
         .or(dispose)
-        .recover(error::handle_rejection);
+        .recover(error::handle_rejection)
+        .with(log);
 
     let rt = Runtime::new().unwrap();
     rt.block_on(async {
