@@ -36,7 +36,7 @@ pub(crate) async fn preview(state: CaptureState) -> Result<impl Reply> {
             .map_err(|e| warp::reject::custom(ApiError::Capture(e)))?;
 
         Ok(warp::reply::json(&StatusResponse {
-            message: "preview launched".to_string(),
+            message: "preview executed".to_string(),
         }))
     } else {
         Err(warp::reject::custom(ApiError::CaptureNotInitialized))

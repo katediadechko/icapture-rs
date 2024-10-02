@@ -25,7 +25,7 @@ mod file;
 pub enum CaptureError {
     #[error("cannot create file or directory '{0}'")]
     CreateFileDirectory(String),
-    #[error("cannot open capture device '{0}'")]
+    #[error("cannot open capture device {0}")]
     DeviceOpen(String),
     #[error("cannot grab a frame")]
     GrabFrame,

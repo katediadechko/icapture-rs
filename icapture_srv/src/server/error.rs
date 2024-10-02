@@ -31,7 +31,7 @@ pub(crate) async fn handle_rejection(
             ),
             ApiError::Capture(CaptureError::DeviceOpen(device)) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("cannot open capture device '{}'", device),
+                format!("cannot open capture device {}", device),
             ),
             ApiError::Capture(CaptureError::GrabFrame) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
