@@ -13,6 +13,10 @@ fn main() {
 
     let state = Arc::new(Mutex::new(None::<Capture>));
 
+    let list = warp::get()
+        .and(warp::path("list"))
+        .and_then(list_devices);
+
     let init = warp::post()
         .and(warp::path("init"))
         .and(warp::body::json().or_else(|_| async {
@@ -42,7 +46,8 @@ fn main() {
         .and(with_state(state.clone()))
         .and_then(dispose_capture);
 
-    let routes = init
+    let routes = list
+        .or(init)
         .or(grab)
         .or(start)
         .or(stop)

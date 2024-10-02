@@ -12,9 +12,11 @@ pub(crate) struct StatusResponse {
 #[derive(Error, Debug)]
 pub(crate) enum ApiError {
     #[error("capture error: {0}")]
-    CaptureError(#[from] CaptureError),
+    Capture(#[from] CaptureError),
     #[error("capture not initialized")]
     CaptureNotInitialized,
+    #[error("cannot enumerate capture devices")]
+    EnumerateDevices,
 }
 impl warp::reject::Reject for ApiError {}
 
@@ -23,33 +25,37 @@ pub(crate) async fn handle_rejection(
 ) -> std::result::Result<impl Reply, Infallible> {
     let (code, message) = if let Some(e) = err.find::<ApiError>() {
         match e {
-            ApiError::CaptureError(CaptureError::CreateFileDirectory(path)) => (
+            ApiError::Capture(CaptureError::CreateFileDirectory(path)) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
                 format!("cannot create file or directory '{}'", path),
             ),
-            ApiError::CaptureError(CaptureError::DeviceNotFound(device)) => (
+            ApiError::Capture(CaptureError::DeviceNotFound(device)) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
                 format!("cannot find capture device '{}'", device),
             ),
-            ApiError::CaptureError(CaptureError::DeviceOpenError(device)) => (
+            ApiError::Capture(CaptureError::DeviceOpen(device)) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
                 format!("cannot find capture device '{}'", device),
             ),
-            ApiError::CaptureError(CaptureError::FrameError) => (
+            ApiError::Capture(CaptureError::GrabFrame) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
                 "cannot grab a frame".to_string(),
             ),
-            ApiError::CaptureError(CaptureError::OpenCvError(error)) => (
+            ApiError::Capture(CaptureError::OpenCv(error)) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
                 format!("opencv error: {}", error),
             ),
-            ApiError::CaptureError(CaptureError::ResourceBusyError) => (
+            ApiError::Capture(CaptureError::ResourceBusy) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
                 "resource is busy".to_string(),
             ),
             ApiError::CaptureNotInitialized => (
                 warp::http::StatusCode::BAD_REQUEST,
                 "capture not initialized".to_string(),
+            ),
+            ApiError::EnumerateDevices => (
+                warp::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "cannot enumerate capture devices".to_string(),
             ),
         }
     } else {

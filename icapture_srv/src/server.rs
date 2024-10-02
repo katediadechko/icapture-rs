@@ -8,10 +8,17 @@ use error::*;
 type Result<T> = std::result::Result<T, Rejection>;
 pub(crate) type CaptureState = Arc<Mutex<Option<Capture>>>;
 
+pub(crate) async fn list_devices() -> Result<impl Reply> {
+    let list = device::enumerate_capture_devices().ok();
+    match list {
+        Some(list) => Ok(warp::reply::json(&list)),
+        None => Err(warp::reject::custom(ApiError::EnumerateDevices))
+    }
+}
 
 pub(crate) async fn init_capture(config: Config, state: CaptureState) -> Result<impl Reply> {
     let capture = Capture::new(&config)
-        .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
+        .map_err(|e| warp::reject::custom(ApiError::Capture(e)))?;
 
     let mut state = state.lock().unwrap();
     *state = Some(capture);
@@ -26,7 +33,7 @@ pub(crate) async fn grab_frame(state: CaptureState) -> Result<impl Reply> {
     if let Some(capture) = state.as_mut() {
         capture
             .grab_frame()
-            .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
+            .map_err(|e| warp::reject::custom(ApiError::Capture(e)))?;
 
         Ok(warp::reply::json(&StatusResponse {
             message: "frame grabbed".to_string(),
@@ -41,7 +48,7 @@ pub(crate) async fn start_grab_video(state: CaptureState) -> Result<impl Reply> 
     if let Some(capture) = state.as_mut() {
         capture
             .start_grab_video()
-            .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
+            .map_err(|e| warp::reject::custom(ApiError::Capture(e)))?;
 
         Ok(warp::reply::json(&StatusResponse {
             message: "video grab started".to_string(),
@@ -56,7 +63,7 @@ pub(crate) async fn stop_grab_video(state: CaptureState) -> Result<impl Reply> {
     if let Some(capture) = state.as_mut() {
         capture
             .stop_grab_video()
-            .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
+            .map_err(|e| warp::reject::custom(ApiError::Capture(e)))?;
 
         Ok(warp::reply::json(&StatusResponse {
             message: "video grab stopped".to_string(),
@@ -71,7 +78,7 @@ pub(crate) async fn dispose_capture(state: CaptureState) -> Result<impl Reply> {
     if let Some(mut capture) = state.take() {
         capture
             .dispose()
-            .map_err(|e| warp::reject::custom(ApiError::CaptureError(e)))?;
+            .map_err(|e| warp::reject::custom(ApiError::Capture(e)))?;
 
         Ok(warp::reply::json(&StatusResponse {
             message: "capture disposed".to_string(),

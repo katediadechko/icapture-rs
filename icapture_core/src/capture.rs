@@ -18,7 +18,7 @@ use std::{
 use thiserror::Error;
 
 pub mod codec;
-mod device;
+pub mod device;
 mod file;
 
 #[derive(Error, Debug)]
@@ -28,13 +28,13 @@ pub enum CaptureError {
     #[error("cannot find capture device '{0}'")]
     DeviceNotFound(String),
     #[error("cannot open capture device '{0}'")]
-    DeviceOpenError(String),
+    DeviceOpen(String),
     #[error("cannot grab a frame")]
-    FrameError,
+    GrabFrame,
     #[error("opencv error: {0}")]
-    OpenCvError(#[from] Error),
+    OpenCv(#[from] Error),
     #[error("resource is busy")]
-    ResourceBusyError,
+    ResourceBusy,
 }
 
 static IS_GRABBING: AtomicBool = AtomicBool::new(false);
@@ -67,7 +67,7 @@ impl Capture {
         let mut instance = Self::new_capture(device_id.unwrap())?;
 
         if !instance.is_opened()? {
-            let err = CaptureError::DeviceOpenError(device_name.clone());
+            let err = CaptureError::DeviceOpen(device_name.clone());
             error!("{}", err);
             return Err(err);
         }
@@ -96,7 +96,7 @@ impl Capture {
     pub fn preview(&mut self) -> Result<(), CaptureError> {
         debug!("preview streaming");
         if IS_GRABBING.load(Ordering::Relaxed) {
-            let err = CaptureError::ResourceBusyError;
+            let err = CaptureError::ResourceBusy;
             error!("{}", err);
             return Err(err);
         }
@@ -122,7 +122,7 @@ impl Capture {
     pub fn grab_frame_to_file(&mut self, file_path: &str) -> Result<bool, CaptureError> {
         debug!("grab frame to file '{}'", file_path);
         if IS_GRABBING.load(Ordering::Relaxed) {
-            let err = CaptureError::ResourceBusyError;
+            let err = CaptureError::ResourceBusy;
             error!("{}", err);
             return Err(err);
         }
@@ -131,7 +131,7 @@ impl Capture {
         let mut frame = Mat::default();
         let success = self.capture.lock().unwrap().read(&mut frame)?;
         if !success || frame.empty() {
-            let err = CaptureError::FrameError;
+            let err = CaptureError::GrabFrame;
             error!("{}", err);
             return Err(err);
         }
@@ -151,7 +151,7 @@ impl Capture {
     pub fn start_grab_video_to_file(&mut self, file_path: &str) -> Result<bool, CaptureError> {
         debug!("grab video to file '{}'", file_path);
         if IS_GRABBING.load(Ordering::Relaxed) {
-            let err = CaptureError::ResourceBusyError;
+            let err = CaptureError::ResourceBusy;
             error!("{}", err);
             return Err(err);
         }

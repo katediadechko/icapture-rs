@@ -70,14 +70,14 @@ mod tests {
     #[test]
     fn test_device_not_found() {
         let names = vec![];
-        let target = "Test device 42";
+        let target = "test device 42";
         assert_eq!(get_capture_device_id_by_name(&names, target), None);
     }
 
     #[test]
     fn test_device_found() {
-        let names = vec![String::from("Test device 0"), String::from("Test device 1")];
-        let target = "Test device 1";
+        let names = vec![String::from("test device 0"), String::from("test device 1")];
+        let target = "test device 1";
         assert_eq!(get_capture_device_id_by_name(&names, target), Some(1));
     }
 }
