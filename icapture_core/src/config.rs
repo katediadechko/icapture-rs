@@ -8,7 +8,7 @@ use crate::capture::codec::Codec;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Config {
-    pub device_name: String,
+    pub device_id: u32,
     pub fps: u32,
     pub frame_width: u32,
     pub frame_height: u32,
@@ -37,7 +37,7 @@ impl From<serde_json::Error> for ConfigError {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            device_name: String::from("USB Capture HDMI 4K+"),
+            device_id: 0,
             fps: 30,
             frame_width: 1920,
             frame_height: 1080,
@@ -81,7 +81,7 @@ mod tests {
     #[test]
     fn test_from_valid_file_succeeds() {
         let config = Config {
-            device_name: "test device".to_string(),
+            device_id: 7,
             fps: 42,
             frame_width: 2560,
             frame_height: 1440,

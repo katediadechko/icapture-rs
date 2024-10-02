@@ -1,5 +1,5 @@
 {
-    "device_name": "USB Capture HDMI 4K+",
+    "device_id": 0,
     "fps": 60,
     "frame_width": 1920,
     "frame_height": 1080,

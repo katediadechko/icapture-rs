@@ -13,9 +13,7 @@ fn main() {
 
     let state = Arc::new(Mutex::new(None::<Capture>));
 
-    let list = warp::get()
-        .and(warp::path("list"))
-        .and_then(list_devices);
+    let list = warp::get().and(warp::path("list")).and_then(list_devices);
 
     let init = warp::post()
         .and(warp::path("init"))
@@ -25,6 +23,11 @@ fn main() {
         }))
         .and(with_state(state.clone()))
         .and_then(init_capture);
+
+    let preview = warp::post()
+        .and(warp::path("preview"))
+        .and(with_state(state.clone()))
+        .and_then(preview);
 
     let grab = warp::post()
         .and(warp::path("frame"))
@@ -47,6 +50,7 @@ fn main() {
         .and_then(dispose_capture);
 
     let routes = list
+        .or(preview)
         .or(init)
         .or(grab)
         .or(start)

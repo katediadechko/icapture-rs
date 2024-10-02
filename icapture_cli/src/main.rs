@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         thread::sleep(Duration::from_millis(500));
         let _ = capture.grab_frame(); // returns error
         thread::sleep(Duration::from_millis(2500));
-        _ = capture.preview(); // return error
+        _ = capture.preview(); // returns error
         capture.dispose()?;
         Ok(())
     });

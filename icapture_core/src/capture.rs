@@ -25,8 +25,6 @@ mod file;
 pub enum CaptureError {
     #[error("cannot create file or directory '{0}'")]
     CreateFileDirectory(String),
-    #[error("cannot find capture device '{0}'")]
-    DeviceNotFound(String),
     #[error("cannot open capture device '{0}'")]
     DeviceOpen(String),
     #[error("cannot grab a frame")]
@@ -49,7 +47,7 @@ impl Capture {
     pub fn new(conf: &Config) -> Result<Self, CaptureError> {
         debug!("create capture instance");
         let config = conf.clone();
-        let device_name = &config.device_name;
+        let device_id = config.device_id;
         let data_dir = &config.data_dir;
         if file::create_dir(data_dir).is_err() {
             let err = CaptureError::CreateFileDirectory(data_dir.clone());
@@ -57,17 +55,10 @@ impl Capture {
             return Err(err);
         }
 
-        let device_id = Self::capture_find_device_by_name(device_name);
-        if device_id.is_none() {
-            let err = CaptureError::DeviceNotFound(device_name.clone());
-            error!("{}", err);
-            return Err(err);
-        }
-
-        let mut instance = Self::new_capture(device_id.unwrap())?;
+        let mut instance = Self::new_capture(device_id)?;
 
         if !instance.is_opened()? {
-            let err = CaptureError::DeviceOpen(device_name.clone());
+            let err = CaptureError::DeviceOpen(device_id.to_string());
             error!("{}", err);
             return Err(err);
         }
@@ -102,16 +93,23 @@ impl Capture {
         }
         IS_GRABBING.store(true, Ordering::Relaxed);
 
-        let window: &str = &self.config.device_name;
-        highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
+        let device_name = String::from("unknown capture device");
+        let window = match device::enumerate_capture_devices() {
+            Ok(devices) => devices
+                .get(self.config.device_id as usize)
+                .cloned()
+                .unwrap_or(device_name),
+            Err(_) => device_name,
+        };
+        highgui::named_window(&window, highgui::WINDOW_AUTOSIZE)?;
         loop {
             let mut frame = Mat::default();
             self.capture.lock().unwrap().read(&mut frame)?;
             if frame.size()?.width > 0 {
-                highgui::imshow(window, &frame)?;
+                highgui::imshow(&window, &frame)?;
             }
             let key = highgui::wait_key(10)?;
-            if key == 27 || highgui::get_window_property(window, highgui::WND_PROP_VISIBLE)? < 1.0 {
+            if key == 27 || highgui::get_window_property(&window, highgui::WND_PROP_VISIBLE)? < 1.0 {
                 break;
             }
         }
@@ -246,11 +244,6 @@ impl Capture {
         self.config.frame_height = size.1;
         Self::capture_verify_frame_size(&self.capture.lock().unwrap(), size)
             .map_err(CaptureError::from)
-    }
-
-    fn capture_find_device_by_name(name: &str) -> Option<u32> {
-        let devices = device::enumerate_capture_devices().ok()?;
-        device::get_capture_device_id_by_name(&devices, name)
     }
 
     fn new_capture(device_id: u32) -> Result<VideoCapture> {

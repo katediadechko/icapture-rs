@@ -28,6 +28,21 @@ pub(crate) async fn init_capture(config: Config, state: CaptureState) -> Result<
     }))
 }
 
+pub(crate) async fn preview(state: CaptureState) -> Result<impl Reply> {
+    let mut state = state.lock().unwrap();
+    if let Some(capture) = state.as_mut() {
+        capture
+            .preview()
+            .map_err(|e| warp::reject::custom(ApiError::Capture(e)))?;
+
+        Ok(warp::reply::json(&StatusResponse {
+            message: "preview launched".to_string(),
+        }))
+    } else {
+        Err(warp::reject::custom(ApiError::CaptureNotInitialized))
+    }
+}
+
 pub(crate) async fn grab_frame(state: CaptureState) -> Result<impl Reply> {
     let mut state = state.lock().unwrap();
     if let Some(capture) = state.as_mut() {

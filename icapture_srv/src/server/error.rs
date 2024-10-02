@@ -29,13 +29,9 @@ pub(crate) async fn handle_rejection(
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
                 format!("cannot create file or directory '{}'", path),
             ),
-            ApiError::Capture(CaptureError::DeviceNotFound(device)) => (
-                warp::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("cannot find capture device '{}'", device),
-            ),
             ApiError::Capture(CaptureError::DeviceOpen(device)) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("cannot find capture device '{}'", device),
+                format!("cannot open capture device '{}'", device),
             ),
             ApiError::Capture(CaptureError::GrabFrame) => (
                 warp::http::StatusCode::INTERNAL_SERVER_ERROR,
