@@ -196,7 +196,7 @@ impl Capture {
                     }
                     frame_count += 1;
                 } else {
-                    thread::sleep(Duration::from_millis(1));
+                    thread::sleep(Duration::from_millis(1000_u64 / (2 * fps as u64)));
                 }
             }
 

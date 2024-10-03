@@ -58,15 +58,17 @@ Client-server application for capturing images and video on Windows.
 
 2. The available endpoints are the following.
 
-   The `init` endpoint requires a request body indicating the full path to the configuration file, e.g. `{ "path": "C:\\config.json" }`. If the file is not present or invalid, default capturing parameters will be used.
-
    ```
+   GET http://localhost:1212/list      # list available capturing devices
    POST http://localhost:1212/init     # initialize capturing
+   POST http://localhost:1212/preview  # preview the capturing stream
    POST http://localhost:1212/frame    # grab the current frame
    POST http://localhost:1212/start    # start grabbing frames
    POST http://localhost:1212/stop     # stop grabbing frames
    POST http://localhost:1212/deinit   # de-initialize capturing
    ```
+
+   The `init` endpoint requires a request body containing capturing configuration, see the `config.json` file for reference. If the body is empty or its content is invalid, default capturing parameters will be used.
 
 ## Test
 
