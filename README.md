@@ -1,6 +1,6 @@
 # icapture-rs
 
-Client-server application for capturing images and video on Windows.
+`icapture-rs` is a client-server application for capturing images and video on Windows. It uses Microsoft Media Foundation (unsafe) to detect available capturing devices and OpenCV Rust bindings to communicate with the selected device.
 
 ## Build
 
