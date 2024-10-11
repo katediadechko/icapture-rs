@@ -48,9 +48,14 @@
    $env:RUST_LOG="debug"
    ```
 
-2. Make sure the configuration file `config.json` is located in the current directory. Update the configuration if necessary. If the file is not present or invalid, default capturing parameters will be used.
+2. Run with `cargo run -p icapture_cli` or `icapture_cli.exe`. Examples:
 
-3. Run with `cargo run -p icapture_cli` or `icapture_cli.exe`.
+   ```PowerShell
+   cargo run -p icapture_cli -- --help
+   cargo run -p icapture_cli -- list-devices
+   cargo run -p icapture_cli -- --config-file .\config.json grab-frame
+   cargo run -p icapture_cli -- --config-file .\config.json grab-video --duration 5
+   ```
 
 ### REST Server
 
