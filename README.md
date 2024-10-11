@@ -11,7 +11,7 @@
    cd vcpkg && bootstrap-vcpkg.bat
    ```
 
-2. Specify the path to the `vcpkg` repository as the following environment variable and add it to the path.
+2. Specify the `vcpkg` repository location as the following environment variable and add it to the path.
 
    ```PowerShell
    $env:VCPKG_ROOT="C:\Git\vcpkg"
@@ -24,10 +24,10 @@
    vcpkg install llvm opencv4[contrib,nonfree]
    ```
 
-4. Add `clang` directory to the `%PATH%`.
+4. Find `clang.exe` in the `vcpkg` directory and add its location to the path.
 
    ```PowerShell
-   $env:PATH += $env:VCPKG_ROOT + "\packages\llvm_x64-windows\tools\llvm" + ";"
+   $env:PATH += $env:VCPKG_ROOT + "\installed\x64-windows\tools\llvm" + ";"
    ```
 
 5. Set the following environment variable.
