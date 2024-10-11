@@ -15,8 +15,16 @@ jobs:
     runs-on: windows-latest
 
     steps:
+    - name: vcpkg build
+      uses: johnwason/vcpkg-action@v6
+      id: vcpkg
+      with:
+        pkgs: llvm opencv4
+        triplet: x64-windows-release
+        token: ${{ github.token }}
+        github-binarycache: true
     - uses: actions/checkout@v4
-    - name: Build
+    - name: build
       run: cargo build --verbose
-    - name: Run tests
+    - name: run tests
       run: cargo test --verbose
