@@ -86,7 +86,7 @@ mod tests {
             frame_width: 2560,
             frame_height: 1440,
             data_dir: "test directory".to_string(),
-            codec: Codec::DIVX,
+            codec: Codec::H264,
         };
         let json = serde_json::to_string(&config).unwrap();
         let file_path = "test_config.json";
