@@ -50,7 +50,7 @@
 
 2. Make sure the configuration file `config.json` is located in the current directory. Update the configuration if necessary. If the file is not present or invalid, default capturing parameters will be used.
 
-3. Run with `icapture_cli.exe`.
+3. Run with `cargo run -p icapture_cli` or `icapture_cli.exe`.
 
 ### REST Server
 
