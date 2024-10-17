@@ -1,9 +1,20 @@
+//! Provides operations with capturing devices on Windows using Microsoft Media Foundation API.
+
 use log::debug;
 use windows::{
     core::*, Win32::Foundation::E_FAIL, Win32::Media::MediaFoundation::*,
     Win32::System::Com::CoTaskMemFree,
 };
 
+/// Gets names of capturing devices available in the system.
+/// 
+/// # Errors
+/// 
+/// Returns the corresponding Windows error in case of failure.
+/// 
+/// # Safety
+/// Requires calling unsafe methods of the `windows` crate.
+#[cfg(target_os = "windows")]
 pub fn enumerate_capture_devices() -> Result<Vec<String>> {
     let mut p_config: Option<IMFAttributes> = None;
     let mut pp_devices: *mut Option<IMFActivate> = std::ptr::null_mut();
@@ -32,13 +43,7 @@ pub fn enumerate_capture_devices() -> Result<Vec<String>> {
     Ok(dev_names)
 }
 
-pub fn get_capture_device_id_by_name(names: &[String], target: &str) -> Option<u32> {
-    names
-        .iter()
-        .position(|name| name == target)
-        .and_then(|pos| pos.try_into().ok())
-}
-
+#[cfg(target_os = "windows")]
 fn get_capture_device_name(device: &Option<IMFActivate>) -> Result<String> {
     if let Some(device) = device {
         let mut name = PWSTR::null();
@@ -61,23 +66,4 @@ fn get_capture_device_name(device: &Option<IMFActivate>) -> Result<String> {
         return Ok(res_name);
     }
     Err(Error::new(E_FAIL, "cannot get capture device name"))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_device_not_found() {
-        let names = vec![];
-        let target = "test device 42";
-        assert_eq!(get_capture_device_id_by_name(&names, target), None);
-    }
-
-    #[test]
-    fn test_device_found() {
-        let names = vec![String::from("test device 0"), String::from("test device 1")];
-        let target = "test device 1";
-        assert_eq!(get_capture_device_id_by_name(&names, target), Some(1));
-    }
 }

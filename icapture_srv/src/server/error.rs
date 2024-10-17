@@ -1,4 +1,4 @@
-use icapture_core::capture::CaptureError;
+use icapture_core::CaptureError;
 use serde::Serialize;
 use std::convert::Infallible;
 use thiserror::Error;

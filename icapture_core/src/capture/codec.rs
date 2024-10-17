@@ -1,3 +1,5 @@
+//! Provides FourCC values and file extentions for different video codecs.
+
 use opencv::{videoio, Result};
 use serde::{Deserialize, Serialize};
 
@@ -9,6 +11,11 @@ pub enum Codec {
 }
 
 impl Codec {
+    /// Gets a FourCC value of a specific video codec.
+    /// 
+    /// # Errors
+    /// 
+    /// Returns the corresponding OpenCV error in case of failure.
     pub fn fourcc(&self) -> Result<i32> {
         match self {
             Codec::H264 => videoio::VideoWriter::fourcc('H', '2', '6', '4'), // OK            
@@ -17,6 +24,7 @@ impl Codec {
         }
     }
 
+    /// Gets a file extention for a specific video codec.
     pub fn file_extension(&self) -> &'static str {
         match self {
             Codec::H264 => "mp4",

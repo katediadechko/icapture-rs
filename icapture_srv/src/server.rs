@@ -1,4 +1,4 @@
-use icapture_core::{capture::*, config::*};
+use icapture_core::{device, Capture, Config};
 use std::sync::{Arc, Mutex};
 use warp::{reject::Rejection, Reply};
 

@@ -1,4 +1,4 @@
-use icapture_core::{capture::Capture, config::Config};
+use icapture_core::{Capture, Config};
 use log::warn;
 use std::sync::{Arc, Mutex};
 use tokio::runtime::Runtime;

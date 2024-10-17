@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use icapture_core::{capture::*, config::*};
+use icapture_core::{device, Capture, Config};
 use std::error::Error;
 use std::thread;
 use std::time::Duration;
