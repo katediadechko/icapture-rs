@@ -1,3 +1,5 @@
+//! Provides operations for saving frames and video from a specified capturing device.
+
 use crate::config::Config;
 use log::{debug, error, warn};
 use opencv::{
@@ -21,29 +23,38 @@ pub mod codec;
 pub mod device;
 mod file;
 
+/// Defines possible capturing errors.
 #[derive(Error, Debug)]
 pub enum CaptureError {
+    /// Cannot create file or directory
     #[error("cannot create file or directory '{0}'")]
     CreateFileDirectory(String),
+    /// Cannot open capturing device
     #[error("cannot open capture device {0}")]
     DeviceOpen(String),
+    /// Cannot grab a frame
     #[error("cannot grab a frame")]
     GrabFrame,
+    /// OpenCV error
     #[error("opencv error: {0}")]
     OpenCv(#[from] Error),
+    /// Video capturing resource is busy
     #[error("resource is busy")]
     ResourceBusy,
 }
 
 static IS_GRABBING: AtomicBool = AtomicBool::new(false);
 
+/// Defines a video capturing object - configuration and OpenCV structures.
 pub struct Capture {
+    /// Video capturing configuration.
     pub config: Config,
     capture: Arc<Mutex<VideoCapture>>,
     writer: Arc<Mutex<Option<VideoWriter>>>,
 }
 
 impl Capture {
+    /// Constructor for a video capturing object.
     pub fn new(conf: &Config) -> Result<Self, CaptureError> {
         debug!("create capture instance");
         let config = conf.clone();
@@ -75,6 +86,7 @@ impl Capture {
         })
     }
 
+    /// Destructor for a video capturing object.
     pub fn dispose(&mut self) -> Result<(), CaptureError> {
         debug!("dispose capture instance");
         self.capture
@@ -84,6 +96,7 @@ impl Capture {
             .map_err(CaptureError::from)
     }
 
+    /// Previews captured video stream.
     pub fn preview(&mut self) -> Result<(), CaptureError> {
         debug!("preview streaming");
         if IS_GRABBING.load(Ordering::Relaxed) {
@@ -117,6 +130,7 @@ impl Capture {
         Ok(())
     }
 
+    /// Saves captured frame as a file with a given path / name.
     pub fn grab_frame_to_file(&mut self, file_path: &str) -> Result<bool, CaptureError> {
         debug!("grab frame to file '{}'", file_path);
         if IS_GRABBING.load(Ordering::Relaxed) {
@@ -141,11 +155,14 @@ impl Capture {
         Ok(success)
     }
 
+    /// Saves captured frame as a file with the default file name.
+    /// The file path is defined in the configuration, the file name is `<timestamp>.png`.
     pub fn grab_frame(&mut self) -> Result<bool, CaptureError> {
         let file_path = format!("{}\\{}", &self.config.data_dir, file::get_name("png"));
         self.grab_frame_to_file(&file_path)
     }
 
+    /// Starts capturing video stream to a file with a given path / name.
     pub fn start_grab_video_to_file(&mut self, file_path: &str) -> Result<bool, CaptureError> {
         debug!("grab video to file '{}'", file_path);
         if IS_GRABBING.load(Ordering::Relaxed) {
@@ -207,6 +224,8 @@ impl Capture {
         Ok(true)
     }
 
+    /// Starts capturing video stream to a file with the default file name.
+    /// The file path is defined in the configuration, the file name is `<timestamp>.<codec_extention>`.
     pub fn start_grab_video(&mut self) -> Result<bool, CaptureError> {
         let file_path = format!(
             "{}\\{}",
@@ -216,20 +235,24 @@ impl Capture {
         self.start_grab_video_to_file(&file_path)
     }
 
+    /// Stops capturing video stream.
     pub fn stop_grab_video(&mut self) -> Result<(), CaptureError> {
         debug!("stop grabber thread");
         IS_GRABBING.store(false, Ordering::Relaxed);
         Ok(())
     }
 
+    /// Gets current FPS value.
     pub fn get_fps(&self) -> Result<u32, CaptureError> {
         Self::capture_get_fps(&self.capture.lock().unwrap()).map_err(CaptureError::from)
     }
 
+    /// Gets current frame size.
     pub fn get_frame_size(&self) -> Result<(u32, u32), CaptureError> {
         Self::capture_get_frame_size(&self.capture.lock().unwrap()).map_err(CaptureError::from)
     }
 
+    /// Sets FPS value.
     pub fn set_fps(&mut self, fps: u32) -> Result<bool, CaptureError> {
         Self::capture_set_fps(&mut (self.capture.lock().unwrap()), fps)
             .map_err(CaptureError::from)?;
@@ -237,6 +260,7 @@ impl Capture {
         Self::capture_verify_fps(&self.capture.lock().unwrap(), fps).map_err(CaptureError::from)
     }
 
+    /// Sets frame size.
     pub fn set_frame_size(&mut self, size: (u32, u32)) -> Result<bool, CaptureError> {
         Self::capture_set_frame_size(&mut (self.capture.lock().unwrap()), size)
             .map_err(CaptureError::from)?;

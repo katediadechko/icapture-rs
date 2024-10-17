@@ -3,10 +3,14 @@
 use opencv::{videoio, Result};
 use serde::{Deserialize, Serialize};
 
+/// Defines supported video codecs.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Codec {
+    /// Advanced Video Coding
     H264,
+    /// Motion JPEG
     MJPG,
+    /// Windows Media Video
     WMV3,
 }
 

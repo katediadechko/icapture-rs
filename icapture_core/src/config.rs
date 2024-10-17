@@ -1,3 +1,5 @@
+//! Provides operations for serializing a capturing device configuration.
+
 use log::{debug, warn};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -6,19 +8,29 @@ use std::io::BufReader;
 
 use crate::capture::codec::Codec;
 
+/// Defines a configuration object.
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Config {
+    /// Capturing device index
     pub device_id: u32,
+    /// Desired FPS
     pub fps: u32,
+    /// Desired frame width
     pub frame_width: u32,
+    /// Desired frame height
     pub frame_height: u32,
+    /// Path to store files at
     pub data_dir: String,
+    /// Desired codec for saving video
     pub codec: Codec,
 }
 
+/// Defines possible serialization errors.
 #[derive(Debug)]
 pub enum ConfigError {
+    /// I/O error
     Io(io::Error),
+    /// JSON error
     Json(serde_json::Error),
 }
 
@@ -48,6 +60,7 @@ impl Default for Config {
 }
 
 impl Config {
+    /// Constructor for a configuration object.
     pub fn new(file_path: &str) -> Self {
         match Self::load_from_file(file_path) {
             Ok(config) => {

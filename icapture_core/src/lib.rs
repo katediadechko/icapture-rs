@@ -2,6 +2,8 @@
 //!
 //! `icapture_core` is a library for capturing images and video on Windows.
 
+#![deny(missing_docs)]
+
 pub use self::capture::Capture;
 pub use self::capture::CaptureError;
 pub use self::capture::codec;
